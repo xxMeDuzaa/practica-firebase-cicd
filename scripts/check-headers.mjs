@@ -31,7 +31,7 @@ const rojo = (s) => `\x1b[31m${s}\x1b[0m`;
 const gris = (s) => `\x1b[90m${s}\x1b[0m`;
 
 async function headersDe(url) {
-  const res = await fetch(url, { redirect: "manual" });
+  const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(15000) });
   return { status: res.status, headers: res.headers, body: await res.text() };
 }
 

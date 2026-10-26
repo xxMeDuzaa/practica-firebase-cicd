@@ -21,6 +21,7 @@ concurrency:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # A5: environment `production` (en Settings → Environments se puede exigir
     #     aprobación manual de un revisor antes de que este job arranque).
     environment:
@@ -64,9 +65,10 @@ jobs:
           channelId: live
 
       - name: Verificar headers en producción
+        timeout-minutes: 5
         run: |
           for i in $(seq 1 24); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "https://practica-ci-cd.web.app/")
+            code=$(curl -s --max-time 10 -o /dev/null -w "%{http_code}" "https://practica-ci-cd.web.app/")
             [ "$code" = "200" ] && break
             sleep 5
           done
