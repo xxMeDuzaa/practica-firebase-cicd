@@ -1,0 +1,16 @@
+
+▶ HTML: https://practica-ci-cd.web.app/
+[90m  status 200[0m
+  [32m✔[0m content-security-policy: [90mdefault-src 'self'; script-src 'self' 'sha256-OBTN3RiyCV4Bq7dFqZ5a2pAXjnCcCYeTJMO2I/LYKeo=' 'sha256-bcUxw3Lxd1…[0m
+  [32m✔[0m strict-transport-security: [90mmax-age=31556926; includeSubDomains; preload[0m
+  [32m✔[0m x-content-type-options: [90mnosniff[0m
+  [32m✔[0m x-frame-options: [90mDENY[0m
+  [32m✔[0m referrer-policy: [90mstrict-origin-when-cross-origin[0m
+  [32m✔[0m permissions-policy: [90mcamera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), hid=(), midi=(), magnet…[0m
+  · cache-control: no-cache
+
+▶ Asset estático: /_next/static/chunks/1x6obpmlu1_c2.js
+  [32m✔[0m cache-control: public, max-age=31536000, immutable
+[32m
+✅ Todos los controles pasaron.
+[0m

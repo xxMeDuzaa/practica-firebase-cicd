@@ -65,5 +65,16 @@ jobs:
 
       # Gate de verificación: si el preview no tiene los headers, el check falla
       # y el PR queda en rojo antes de mergear.
+      # Un canal recién creado puede tardar unos segundos en responder (404),
+      # así que primero se espera a que devuelva 200 (máx. ~2 minutos).
       - name: Verificar headers en el preview
-        run: node scripts/check-headers.mjs "${{ steps.deploy.outputs.details_url }}"
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.details_url }}
+        run: |
+          for i in $(seq 1 24); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$PREVIEW_URL/")
+            echo "Intento $i: HTTP $code"
+            [ "$code" = "200" ] && break
+            sleep 5
+          done
+          node scripts/check-headers.mjs "$PREVIEW_URL"

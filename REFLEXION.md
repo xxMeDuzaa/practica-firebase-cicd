@@ -37,10 +37,25 @@ Observación: sin configurar nada, Firebase Hosting ya envía `Strict-Transport-
 
 ### B5 · Después (producción con headers)
 
-Calificación securityheaders.com: **_ (completar, se espera A o A+)**
+Calificación securityheaders.com: ** A+**
+
+La CSP servida en producción ya no tiene `'unsafe-inline'`: `script-src` lista los `sha256` calculados por `scripts/csp-hashes.mjs` en el pipeline. El HTML pasó de `max-age=3600` a `no-cache` y los assets con hash a un año `immutable`.
 
 ```text
-(pegar acá la salida, que tiene que terminar en "✅ Todos los controles pasaron.")
+▶ HTML: https://practica-ci-cd.web.app/
+  status 200
+  ✔ content-security-policy: default-src 'self'; script-src 'self' 'sha256-OBTN3RiyCV4Bq7dFqZ5a2pAXjnCcCYeTJMO2I/LYKeo=' 'sha256-bcUxw3Lxd1…
+  ✔ strict-transport-security: max-age=31556926; includeSubDomains; preload
+  ✔ x-content-type-options: nosniff
+  ✔ x-frame-options: DENY
+  ✔ referrer-policy: strict-origin-when-cross-origin
+  ✔ permissions-policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=(), hid=(), midi=(), magnet…
+  · cache-control: no-cache
+
+▶ Asset estático: /_next/static/chunks/1x6obpmlu1_c2.js
+  ✔ cache-control: public, max-age=31536000, immutable
+
+✅ Todos los controles pasaron.
 ```
 
 ## Decisiones de configuración
