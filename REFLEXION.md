@@ -8,7 +8,7 @@
 |---|---|---|
 | 1 | Repo | https://github.com/xxMeDuzaa/practica-firebase-cicd |
 | 2 | Producción | https://practica-ci-cd.web.app |
-| 3 | PR mergeado con comentario del bot | https://github.com/xxMeDuzaa/practica-firebase-cicd/pull/N |
+| 3 | PR mergeado con comentario del bot | https://github.com/xxMeDuzaa/practica-firebase-cicd/pull/2 |
 
 ## Mediciones (entregable 4)
 
@@ -119,6 +119,20 @@ Los archivos de `/_next/static/` tienen un hash del contenido en el nombre (`pag
 - **Arquitectura**: no alcanza con archivos estáticos. Habría que usar **Firebase App Hosting** (o Cloud Run), donde Next corre como un servidor Node en contenedores; el pipeline construye una imagen y el rollback pasa a ser entre revisiones del servicio. Aparecen cold starts, logs del servidor, variables de entorno y secretos en runtime.
 - **CSP**: mejora. El servidor puede generar un **nonce** distinto por request (por ejemplo en el middleware/proxy de Next) y usar `script-src 'nonce-…' 'strict-dynamic'`, sin `'unsafe-inline'` ni hashes recalculados en CI. Los headers se podrían definir en código además de en la config. Como contrapartida, ese HTML ya no se puede cachear en el CDN porque el nonce cambia en cada respuesta.
 - **Costo**: App Hosting exige el plan **Blaze** (con tarjeta, pago por uso de Cloud Run, Cloud Build y Artifact Registry). Deja de ser costo cero garantizado y hay que poner alertas de presupuesto.
+
+### A6 · Ciclo completo y rollback (registro)
+
+| Paso | Canal | Versión en el footer | Release de Hosting |
+|---|---|---|---|
+| PR #2 abierto (`feat/titulo`) | preview `pr2-feat-titulo` | `aac91c9` · rama `feat/titulo` · título nuevo | — |
+| Mientras tanto, producción sin cambios | live | `d5c3527` · `main` · título viejo | `bd4a4d` |
+| Merge del PR #2 | live | `30c9d46` · `main` · título nuevo | `b39f71` |
+| Rollback desde la consola (versión `bd4a4d`) | live | `d5c3527` · `main` · título viejo | `bd4a4d` |
+| Bonus: `hosting:clone practica-ci-cd:pr2-feat-titulo practica-ci-cd:live` | live | `aac91c9` · `feat/titulo` · título nuevo | copia del preview |
+
+El preview muestra `aac91c9` (último commit de la rama) y producción `30c9d46` (el merge commit que GitHub crea en `main`), por eso los SHA difieren entre canales. En el bonus, producción pasó a mostrar exactamente `aac91c9` / `feat/titulo`: `hosting:clone` copia los archivos ya compilados del preview, sin build nuevo, así que se libera bit a bit lo que se revisó. El rollback tardó segundos porque Hosting solo vuelve a apuntar `live` a una versión ya subida, sin recompilar. Elegí `bd4a4d` y no `c446a2` porque esta última es el deploy manual de la medición B1, sin headers: hacer rollback a ella habría reabierto el problema de seguridad.
+
+**Incidente en el pipeline:** el primer run del PR #2 falló en el gate con `status 404`: el script consultó el canal recién creado en el mismo segundo del deploy, antes de que el CDN lo sirviera. Lo corregí haciendo que el paso espere hasta recibir HTTP 200 (con reintentos cada 5 s, hasta unos 2 minutos) antes de verificar los headers. Un gate de verificación tiene que tolerar la consistencia eventual del CDN, porque si no da falsos negativos.
 
 ### Rollback: ¿qué pasa con `main`?
 Después del rollback en la consola, `live` sirve la versión anterior pero `main` sigue con el código nuevo: el repo y producción quedan desincronizados. En el próximo merge el pipeline compila `main` completo y **vuelve a publicar el cambio que se había retirado**, junto con lo nuevo. En un equipo real, el rollback en consola se usa como mitigación inmediata y enseguida se corrige el repo: un `git revert` del commit problemático por PR (así `main` refleja lo que está en producción y queda registro), o un *roll forward* con el arreglo. Otra opción es usar feature flags para desactivar el cambio sin redeploy.
